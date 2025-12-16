@@ -5,4 +5,4 @@ nixPkgs = ['tesseract', 'opencv4']
 cmds = ['pip install -r requirements.txt']
 
 [start]
-cmd = 'streamlit run app_final.py --server.port $PORT --server.address 0.0.0.0'
+cmd = 'streamlit run app_simple_deploy.py --server.port $PORT --server.address 0.0.0.0'
