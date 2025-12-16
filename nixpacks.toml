@@ -1,5 +1,8 @@
+[variables]
+PYTHON_VERSION = '3.9'
+
 [phases.setup]
-nixPkgs = ['tesseract', 'opencv4']
+nixPkgs = ['python39', 'pip']
 
 [phases.install]
 cmds = ['pip install -r requirements.txt']
