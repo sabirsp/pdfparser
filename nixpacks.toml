@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ['tesseract', 'opencv4']
+
+[phases.install]
+cmds = ['pip install -r requirements.txt']
+
+[start]
+cmd = 'streamlit run app_final.py --server.port $PORT --server.address 0.0.0.0'
