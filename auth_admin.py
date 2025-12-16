@@ -143,9 +143,17 @@ def is_user_approved(email):
         if st.session_state.get('db'):
             doc = st.session_state.db.collection('users').document(email).get()
             if doc.exists:
-                return doc.to_dict().get('approved', False)
+                user_data = doc.to_dict()
+                approved = user_data.get('approved', False)
+                st.info(f"Debug: User {email} found in Firestore, approved: {approved}")
+                return approved
+            else:
+                st.warning(f"Debug: User {email} not found in Firestore")
+        else:
+            st.error("Debug: Firestore database not connected")
         return False
-    except:
+    except Exception as e:
+        st.error(f"Debug: Error checking approval for {email}: {str(e)}")
         return False
 
 def admin_panel():
