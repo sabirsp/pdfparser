@@ -71,14 +71,40 @@ if uploaded_file is not None:
             df = pd.DataFrame(df_data)
             st.dataframe(df, use_container_width=True)
             
-            # Download JSON
-            json_str = json.dumps(result, indent=2)
-            st.download_button(
-                label="Download JSON",
-                data=json_str,
-                file_name=f"parsed_{uploaded_file.name}.json",
-                mime="application/json"
-            )
+            # Download options
+            st.subheader("📥 Download Results")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                json_str = json.dumps(result, indent=2)
+                st.download_button(
+                    label="Download JSON",
+                    data=json_str,
+                    file_name=f"parsed_{uploaded_file.name}.json",
+                    mime="application/json"
+                )
+            
+            with col2:
+                # Tally XML Export
+                with st.expander("📤 Export to Tally XML"):
+                    bank_ledger_name = st.text_input(
+                        "Bank Ledger Name (as in Tally)",
+                        help="Enter the exact ledger name as saved in Tally",
+                        key=f"ledger_{uploaded_file.name}"
+                    )
+                    
+                    if bank_ledger_name and result['transactions']:
+                        xml_content = generate_tally_xml(result['transactions'], bank_ledger_name)
+                        st.download_button(
+                            label=f"Download Tally XML ({len(result['transactions'])} transactions)",
+                            data=xml_content,
+                            file_name=f"tally_{bank_ledger_name}.xml",
+                            mime="application/xml"
+                        )
+                    elif not bank_ledger_name:
+                        st.info("Enter Bank Ledger Name to enable Tally XML export")
+                    else:
+                        st.warning("No transactions available for Tally export")
         
     except Exception as e:
         st.error(f"❌ Error: {str(e)}")
