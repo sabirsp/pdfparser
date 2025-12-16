@@ -93,18 +93,60 @@ if uploaded_file is not None:
                         key=f"ledger_{uploaded_file.name}"
                     )
                     
-                    if bank_ledger_name and result['transactions']:
-                        xml_content = generate_tally_xml(result['transactions'], bank_ledger_name)
-                        st.download_button(
-                            label=f"Download Tally XML ({len(result['transactions'])} transactions)",
-                            data=xml_content,
-                            file_name=f"tally_{bank_ledger_name}.xml",
-                            mime="application/xml"
-                        )
-                    elif not bank_ledger_name:
-                        st.info("Enter Bank Ledger Name to enable Tally XML export")
-                    else:
+                    # Pre-populate dates with first and last transaction dates
+                    def parse_date(date_str):
+                        formats = ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y', '%d %b %Y', '%d-%b-%Y', '%d/%b/%Y', '%B%d%Y', '%B%d,%Y', '%B%d, %Y']
+                        for fmt in formats:
+                            try:
+                                return datetime.strptime(date_str, fmt).date()
+                            except ValueError:
+                                continue
+                        raise ValueError(f"Unable to parse date: {date_str}")
+                    
+                    if not result['transactions']:
                         st.warning("No transactions available for Tally export")
+                    else:
+                        first_date = parse_date(result['transactions'][0]['date'])
+                        last_date = parse_date(result['transactions'][-1]['date'])
+                        
+                        # Ensure from_date is earlier than to_date
+                        min_date = min(first_date, last_date)
+                        max_date = max(first_date, last_date)
+                        
+                        col_date1, col_date2 = st.columns(2)
+                        with col_date1:
+                            from_date = st.date_input("From Date", value=min_date)
+                        with col_date2:
+                            to_date = st.date_input("To Date", value=max_date)
+                        
+                        if bank_ledger_name:
+                            # Filter transactions by date range
+                            filtered_txns = []
+                            for tx in result['transactions']:
+                                # Convert transaction date string to date object for comparison
+                                tx_date = parse_date(tx['date'])
+                                if from_date <= tx_date <= to_date:
+                                    filtered_txns.append(Transaction(
+                                        date=tx_date,
+                                        description=tx['description'],
+                                        debit=tx['debit'],
+                                        credit=tx['credit'],
+                                        balance=tx['balance'],
+                                        bank_name=tx['bank_name']
+                                    ))
+                            
+                            if filtered_txns:
+                                xml_content = generate_tally_xml(filtered_txns, bank_ledger_name)
+                                st.download_button(
+                                    label=f"Download Tally XML ({len(filtered_txns)} transactions)",
+                                    data=xml_content,
+                                    file_name=f"tally_{bank_ledger_name}_{from_date}_{to_date}.xml",
+                                    mime="application/xml"
+                                )
+                            else:
+                                st.warning("No transactions found in selected date range")
+                        else:
+                            st.info("Enter Bank Ledger Name to enable Tally XML export")
         
     except Exception as e:
         st.error(f"❌ Error: {str(e)}")
