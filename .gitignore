@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.pdf
+*.PDF
+.DS_Store
+*.log
+temp_statement.pdf
+pdfparser-a63d5-firebase-adminsdk-fbsvc-fef1058fff.json
