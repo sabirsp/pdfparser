@@ -13,34 +13,46 @@ def init_firebase():
             "projectId": "pdfparser-a63d5"
         }
     
-    if not firebase_admin._apps:
+    # Initialize Firebase only once globally
+    if 'firebase_initialized' not in st.session_state:
         try:
-            # Try to use service account file first
-            import os
-            if os.path.exists("pdfparser-a63d5-firebase-adminsdk-fbsvc-fef1058fff.json"):
-                cred = credentials.Certificate("pdfparser-a63d5-firebase-adminsdk-fbsvc-fef1058fff.json")
-            else:
-                # Use environment variables for deployment
-                firebase_config = {
-                    "type": "service_account",
-                    "project_id": "pdfparser-a63d5",
-                    "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
-                    "private_key": os.getenv('FIREBASE_PRIVATE_KEY', '').replace('\\n', '\n'),
-                    "client_email": os.getenv('FIREBASE_CLIENT_EMAIL'),
-                    "client_id": os.getenv('FIREBASE_CLIENT_ID'),
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token"
-                }
-                cred = credentials.Certificate(firebase_config)
+            if not firebase_admin._apps:
+                # Try to use service account file first
+                import os
+                if os.path.exists("pdfparser-a63d5-firebase-adminsdk-fbsvc-fef1058fff.json"):
+                    cred = credentials.Certificate("pdfparser-a63d5-firebase-adminsdk-fbsvc-fef1058fff.json")
+                else:
+                    # Use environment variables for deployment
+                    firebase_config = {
+                        "type": "service_account",
+                        "project_id": "pdfparser-a63d5",
+                        "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
+                        "private_key": os.getenv('FIREBASE_PRIVATE_KEY', '').replace('\\n', '\n'),
+                        "client_email": os.getenv('FIREBASE_CLIENT_EMAIL'),
+                        "client_id": os.getenv('FIREBASE_CLIENT_ID'),
+                        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                        "token_uri": "https://oauth2.googleapis.com/token"
+                    }
+                    cred = credentials.Certificate(firebase_config)
+                
+                firebase_admin.initialize_app(cred, {
+                    'projectId': 'pdfparser-a63d5'
+                })
             
-            firebase_admin.initialize_app(cred, {
-                'projectId': 'pdfparser-a63d5'
-            })
+            # Always create new Firestore client
             st.session_state.db = firestore.client()
-            st.success("✅ Firestore connected successfully")
+            st.session_state.firebase_initialized = True
             
         except Exception as e:
             st.error(f"❌ Firebase init error: {str(e)}")
+            st.session_state.db = None
+            st.session_state.firebase_initialized = False
+    
+    # Ensure db is available even if already initialized
+    if 'db' not in st.session_state and firebase_admin._apps:
+        try:
+            st.session_state.db = firestore.client()
+        except:
             st.session_state.db = None
 
 def auth_form():
