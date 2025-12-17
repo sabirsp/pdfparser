@@ -23,15 +23,25 @@ def init_firebase():
                     cred = credentials.Certificate("pdfparser-a63d5-firebase-adminsdk-fbsvc-fef1058fff.json")
                 else:
                     # Use environment variables for deployment
+                    private_key = os.getenv('FIREBASE_PRIVATE_KEY', '')
+                    # Fix private key formatting - handle both \n and actual newlines
+                    if '\\n' in private_key:
+                        private_key = private_key.replace('\\n', '\n')
+                    # Ensure proper BEGIN/END markers
+                    if private_key and not private_key.startswith('-----BEGIN'):
+                        private_key = f"-----BEGIN PRIVATE KEY-----\n{private_key}\n-----END PRIVATE KEY-----"
+                    
                     firebase_config = {
                         "type": "service_account",
                         "project_id": "pdfparser-a63d5",
                         "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
-                        "private_key": os.getenv('FIREBASE_PRIVATE_KEY', '').replace('\\n', '\n'),
+                        "private_key": private_key,
                         "client_email": os.getenv('FIREBASE_CLIENT_EMAIL'),
                         "client_id": os.getenv('FIREBASE_CLIENT_ID'),
                         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                        "token_uri": "https://oauth2.googleapis.com/token"
+                        "token_uri": "https://oauth2.googleapis.com/token",
+                        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                        "client_x509_cert_url": f"https://www.googleapis.com/robot/v1/metadata/x509/{os.getenv('FIREBASE_CLIENT_EMAIL', '').replace('@', '%40')}"
                     }
                     cred = credentials.Certificate(firebase_config)
                 
