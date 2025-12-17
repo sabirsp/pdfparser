@@ -199,6 +199,17 @@ def admin_panel():
                                 st.rerun()
                         st.sidebar.divider()
                 else:
+                    # Show all users for debugging
+                    all_users = st.session_state.db.collection('users').stream()
+                    all_users_list = [user.to_dict() for user in all_users]
+                    
+                    st.sidebar.write(f"Total users: {len(all_users_list)}")
+                    
+                    for user in all_users_list:
+                        email = user['email']
+                        approved = user.get('approved', False)
+                        st.sidebar.write(f"📧 {email} - {'✅' if approved else '⏳'}")
+                    
                     st.sidebar.info("No pending approvals")
         except Exception as e:
             st.sidebar.error(f"Error: {str(e)}")
