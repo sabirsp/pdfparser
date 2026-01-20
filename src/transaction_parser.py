@@ -24,6 +24,7 @@ from .karnataka_parser import KarnatakaTransactionParser
 from .kotak_parser import KotakTransactionParser
 from .canara_parser import CanaraTransactionParser
 from .indusind_parser import IndusIndTransactionParser
+from .uco_parser import UCOBankParser
 
 class TransactionParser:
     def __init__(self):
@@ -92,6 +93,9 @@ class TransactionParser:
         elif bank_name == 'INDUSIND' and pdf_path:
             indusind_parser = IndusIndTransactionParser()
             return indusind_parser.parse_transactions(pdf_path, password=password)
+        elif bank_name == 'UCO':
+            uco_parser = UCOBankParser()
+            return uco_parser.parse(text, pdf_path=pdf_path, password=password)
         
         lines = text.split('\n')
         transactions = []

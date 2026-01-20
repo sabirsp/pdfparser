@@ -100,6 +100,11 @@ BANK_SIGNATURES = {
         'keywords': ['indusind bank', 'indb'],
         'account_pattern': r'\d{12}',
         'typical_headers': ['Date', 'Particulars', 'Chq No/Ref No', 'Withdrawal', 'Deposit', 'Balance']
+    },
+    'UCO': {
+        'keywords': ['uco bank', 'ucba', 'ucobank'],
+        'account_pattern': r'\d{14}',
+        'typical_headers': ['Date', 'Particulars', 'Withdrawals', 'Deposits', 'Balance']
     }
 }
 
@@ -107,13 +112,12 @@ class BankIdentifier:
     def identify_bank(self, text):
         import re
         
-        # First, find IFSC code context (look for "IFSC" or "IFS Code" keyword followed by the code)
-        # Pattern: IFSC (Code)? :? XXXX0YYYYYY or IFS Code :? XXXX0YYYYYY
+        # Level 1: Find IFSC code
         ifsc_match = re.search(r'ifs(?:c)?\s*(?:code)?\s*:?\s*([a-z]{4}0\d{6})', text.lower())
         
         if ifsc_match:
             ifsc_code = ifsc_match.group(1)
-            bank_code = ifsc_code[:4]  # First 4 characters
+            bank_code = ifsc_code[:4]
             
             bank_mapping = {
                 'utib': 'AXIS',
@@ -138,6 +142,18 @@ class BankIdentifier:
             }
             
             return bank_mapping.get(bank_code, 'UNKNOWN')
+        
+        # Level 2: Search for bank name/logo in text
+        text_lower = text.lower()
+        
+        # Check UCO first (to avoid false match with 'iob' substring)
+        if 'ucobank' in text_lower or 'uco bank' in text_lower:
+            return 'UCO'
+        
+        for bank_name, bank_info in BANK_SIGNATURES.items():
+            for keyword in bank_info['keywords']:
+                if keyword.lower() in text_lower:
+                    return bank_name
         
         return "UNKNOWN"
     
